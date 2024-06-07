@@ -1,18 +1,11 @@
 /*
  *
  * memspeed.c
- * test 1.8GB memory write speed
+ * test memory write speed
  * each byte will be set to a value between 0~255
  * neighbour bytes will have different value
- * the memory write was splitted into 180 loops,
- * in each loop 10 MB will be allocated and initilized
- * the file will be compiled both for unikraft application
- * and linux native process
- *
- * binary buddy memory allocation algorithm is used by default
- * for unikraft application.
- * ignoring the inefficience of the memory allocation algorithm,
- * provides 4GB for the unikraft application to run the test
+ * the memory write was splitted into g_loop loops,
+ * in each loop g_mem_per_loop MB will be allocated and initilized
  *
  * joehuang.sweden@gmail.com
  *
