@@ -21,6 +21,7 @@
 #include "mimalloc.h"
 #include "static.c"
 
+int g_mimalloc = 0;
 int g_huge = 0;
 int g_loop = 200;
 int g_mem_per_loop = 10;
@@ -30,11 +31,20 @@ int g_mem_per_loop = 10;
 #define REPEAT_TIMES 50
 #define BILLION 1000000000L
 
+inline void *mymalloc(size_t size) {
+	if (g_mimalloc) {
+		return mi_malloc(size);
+	}
+	else {
+		return malloc(size);
+	}
+}
+
 void *test_mem(int loop) {
     int i;
     char *pMem = NULL;
 
-    pMem = mi_malloc(MEM_PER_LOOP);
+    pMem = mymalloc(MEM_PER_LOOP);
     if (pMem == NULL) {
         printf("no enough memory %d loop \n", loop);
         return NULL;
@@ -76,7 +86,7 @@ void test_loop(void) {
     char *pAllMem;
     char *pNow;
 
-    pAllMem = mi_malloc((TOTAL_LOOP+2)*sizeof(char *));
+    pAllMem = mymalloc((TOTAL_LOOP+2)*sizeof(char *));
     if (pAllMem == NULL) {
         printf("memory pointer space allocation failure \n");
         return;
@@ -97,7 +107,7 @@ void test_loop(void) {
 }
 
 void init_mimalloc(void) {
-	if (!g_huge) {
+	if (!g_huge || !g_mimalloc) {
 		return;
 	}
 
@@ -118,17 +128,24 @@ bool handle_para(int argc, char **argv) {
 		return true;
 	}
 
-	if (argc > 4) {
+	if (argc > 5) {
 		printf("too many arguments \n");
 		return false;
 	}
 
-	if (argc == 2 || argc == 3 || argc == 4) {
-		g_huge = atoi(argv[1]);
-		if (argc == 3 || argc==4) {
-			g_mem_per_loop = atoi(argv[2]);
-			if(argc == 4) {
-				g_loop = atoi(argv[3]);
+	if (argc >= 2) {
+		g_mimalloc = atoi(argv[1]);
+		if (!g_mimalloc) {
+			return true;
+		}
+	}
+
+	if (argc == 3 || argc == 4 || argc == 5) {
+		g_huge = atoi(argv[2]);
+		if (argc == 4 || argc == 5) {
+			g_mem_per_loop = atoi(argv[3]);
+			if(argc == 5) {
+				g_loop = atoi(argv[4]);
 			}
 		}
 	}
@@ -141,7 +158,7 @@ int main(int argc, char **argv)
 	uint64_t diff;
 	struct timespec start, end;
 
-	printf("memspeed [huge] [mem_per_loop] [loop]\n");
+	printf("memspeed [mimalloc] [huge] [mem_per_loop] [loop]\n");
 	if (!handle_para(argc, argv)) {
 		return 0;
 	}
